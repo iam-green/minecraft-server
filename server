@@ -1,0 +1,292 @@
+#!/bin/bash
+version="latest"
+library_directory=~/.past2l
+server_directory=.
+ram="4G"
+bukkit="paper"
+remapped=false
+force_replace=false
+
+usage() {
+  echo "Usage: $0 [OPTIONS]"
+  echo "Options:"
+  echo " -h, --help                     Show this help and exit"
+  echo " -v, --version                  Select the Minecraft Server version"
+  echo " -d, -sd, --server-directory    Select the path to install the Minecraft Server"
+  echo " -ld, --library-directory       Select the path to install the required libraries"
+  echo " -b, --bukkit                   Select the Bukkit type you want to install"
+  echo " -r, --ram                      Select the amount of RAM you want to allocate to the server"
+  echo " --remapped                     Select the remapped version of the server"
+  echo " --force-replace                Force replace the existing server file"
+}
+
+has_argument() {
+  [[ ("$1" == *=* && -n ${1#*=}) || (! -z "$2" && "$2" != -*) ]]
+}
+
+extract_argument() {
+  echo "${2:-${1#*=}}"
+}
+
+handle_argument() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -v | --version)
+      if ! has_argument $@; then
+        echo "Version not specified." >&2
+        usage
+        exit 1
+      fi
+      version=$(extract_argument $@)
+      shift
+      ;;
+    -d | -sd | --server-directory)
+      if ! has_argument $@; then
+        echo "Location not specified." >&2
+        usage
+        exit 1
+      fi
+      server_directory=$(extract_argument $@)
+      shift
+      ;;
+    -ld | --library-directory)
+      if ! has_argument $@; then
+        echo "Location not specified." >&2
+        usage
+        exit 1
+      fi
+      library_directory=$(extract_argument $@)
+      shift
+      ;;
+    -r | --ram)
+      if ! has_argument $@; then
+        echo "RAM not specified." >&2
+        usage
+        exit 1
+      fi
+      ram=$(extract_argument $@)
+      shift
+      ;;
+    --remapped)
+      remapped=true
+      ;;
+    --force-replace)
+      force_replace=true
+      ;;
+    -b | --bukkit)
+      if ! has_argument $@; then
+        echo "Bukkit type not specified." >&2
+        usage
+        exit 1
+      fi
+      bukkit=$(extract_argument $@)
+      shift
+      ;;
+    *)
+      echo "Invalid option: $1" >&2
+      usage
+      exit 1
+      ;;
+    esac
+    shift
+  done
+}
+
+contains() {
+  [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo true || echo false
+}
+
+set_timezone() {
+  if [ $TZ ]; then
+    ln -sf /usr/share/zoneinfo/$TZ /etc/localtime
+  fi
+}
+
+get_os() {
+  if [ $(uname) == "Darwin" ]; then
+    echo "macos"
+  else
+    echo "linux"
+  fi
+}
+
+get_arch() {
+  case $(uname -m) in
+  "x86_64")
+    echo "amd64"
+    ;;
+  "arm64" | "aarch64")
+    echo "arm64"
+    ;;
+  *)
+    exit 1
+    ;;
+  esac
+}
+
+# check_java_version <minecraft_version>
+check_java_version() {
+  local version_url=$(get_mc_version_list | $library_directory/.jq -r ".[] | select(.id == \"$1\") | .url")
+  echo $(curl -s $version_url | $library_directory/.jq -r ".javaVersion.majorVersion")
+}
+
+# install_java <java_version>
+install_java() {
+  declare -a JRE
+  JRE[8]=zulu8.74.0.17-ca-jre8.0.392
+  JRE[16]=zulu16.32.15-ca-jre16.0.2
+  JRE[17]=zulu17.46.19-ca-jre17.0.9
+  JRE[21]=zulu21.34.19-ca-jre21.0.3
+
+  local java_version=$1
+  if [ $(get_os) == "macos" ]; then
+    local os="macosx"
+  else
+    local os="linux"
+  fi
+  if [ $(get_arch) == "amd64" ]; then
+    local arch="x64"
+  else
+    local arch="aarch64"
+  fi
+
+  if [ ! -d $library_directory/.java ]; then
+    mkdir -p $library_directory/.java
+  fi
+
+  if [ $(contains "8 16 17 21" $java_version) = false ]; then
+    echo "Invalid Java version."
+    exit 1
+  fi
+
+  if [ ! -d "$library_directory/.java/$java_version" ]; then
+    curl -sLO https://cdn.azul.com/zulu/bin/${JRE[$java_version]}-${os}_$arch.tar.gz
+    tar -zxf ${JRE[$java_version]}-${os}_$arch.tar.gz -C $library_directory
+    mv $library_directory/${JRE[$java_version]}-${os}_$arch $library_directory/.java/$java_version
+    rm ${JRE[$java_version]}-${os}_$arch.tar.gz
+  fi
+}
+
+install_jq() {
+  if [ ! -e $library_directory/.jq ]; then
+    curl -s -o $library_directory/.jq -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-$(get_os)-$(get_arch)
+    chmod +x $library_directory/.jq
+  fi
+}
+
+get_mc_version_list() {
+  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/.jq ".versions")
+}
+
+get_mc_latest_version() {
+  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/.jq -r ".latest.release")
+}
+
+# check_version_exist <minecraft_version>
+check_version_exist() {
+  local version_=$1
+  local version_exist=$(get_mc_version_list | $library_directory/.jq ".[] | select(.id == \"$version_\") | .id")
+  if [ ! $version_exist ]; then
+    echo "Version not found."
+    exit 1
+  fi
+}
+
+# get_server_file <minecraft_version> <bukkit>
+get_server_file() {
+  local version_=$1
+  local bukkit_=$2
+  if [ $force_replace == true ]; then
+    rm -f $server_directory/server.jar
+  fi
+  if [ -e $server_directory/server.jar ]; then
+    return 0
+  fi
+  case $bukkit_ in
+  "vanilla")
+    local version_url=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/.jq -r ".versions[] | select(.id == \"$version_\") | .url")
+    local server_file=$(curl -s $version_url | $library_directory/.jq -r ".downloads.server.url")
+    if [ $server_file == "null" ]; then
+      echo "Server file not found."
+      exit 1
+    else
+      echo $server_file
+    fi
+    ;;
+  "paper")
+    local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$version_)
+    if [ $status -ne 200 ]; then
+      echo "PaperMC Bukkit not found."
+      exit 1
+    fi
+    local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$version_ | $library_directory/.jq -r ".builds[-1]")
+    local mojmap=$([ $remapped == true ] && echo "-mojmap" || echo "")
+    local url="https://papermc.io/api/v2/projects/paper/versions/$version_/builds/$build_id/downloads/paper$mojmap-$version_-$build_id.jar"
+    local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" $url)
+    if [ $status -ne 200 ]; then
+      echo "PaperMC Bukkit not found."
+      exit 1
+    fi
+    ;;
+  *)
+    echo "Invaild Bukkit type."
+    exit 1
+    ;;
+  esac
+}
+
+create_group_user() {
+  if [ ! $UID ] || [ ! $GID ] || id "$UID" &>/dev/null || id "$UID" &>/dev/null; then
+    return 0
+  fi
+
+  if ! grep -q ":$GID:" /etc/group; then
+    groupadd -g "$GID" minecraft
+  fi
+
+  if ! id "$UID" &>/dev/null; then
+    useradd -u "$UID" -g "$GID" -m minecraft
+  fi
+
+  USER=$(getent passwd "$UID" | cut -d: -f1)
+
+  chown -R $UID:$GID $server_directory
+  chown -R $UID:$GID $library_directory
+}
+
+location_setting() {
+  if [ ! -d $server_directory ]; then
+    mkdir -p $server_directory
+  fi
+
+  if [ ! -d $library_directory ]; then
+    mkdir -p $library_directory
+  fi
+
+  echo "eula=true" >$server_directory/eula.txt
+}
+
+# start_server <java_version> <ram>
+start_server() {
+  sudo -u $USER $library_directory/.java/$1/bin/java -Xms$2 -Xmx$2 -Dfile.encoding=utf-8 -jar $server_directory/server.jar nogui
+}
+
+handle_argument "$@"
+
+if [ $version == "latest" ]; then
+  version=$(get_mc_latest_version)
+fi
+
+set_timezone
+location_setting
+install_jq
+check_version_exist $version
+java_version=$(check_java_version $version)
+install_java $java_version
+get_server_file $version $bukkit
+create_group_user
+start_server $java_version $ram
