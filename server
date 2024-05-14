@@ -3,7 +3,7 @@ version="latest"
 library_directory=~/.past2l
 server_directory=.
 ram="4G"
-bukkit="paper"
+type="paper"
 remapped=false
 force_replace=false
 
@@ -12,10 +12,10 @@ usage() {
   echo "Options:"
   echo " -h, --help                     Show this help and exit"
   echo " -v, --version                  Select the Minecraft Server version"
+  echo " -t, --type                     Select the Bukkit type you want to install"
+  echo " -r, --ram                      Select the amount of RAM you want to allocate to the server"
   echo " -d, -sd, --server-directory    Select the path to install the Minecraft Server"
   echo " -ld, --library-directory       Select the path to install the required libraries"
-  echo " -b, --bukkit                   Select the Bukkit type you want to install"
-  echo " -r, --ram                      Select the amount of RAM you want to allocate to the server"
   echo " --remapped                     Select the remapped version of the server"
   echo " --force-replace                Force replace the existing server file"
 }
@@ -77,13 +77,13 @@ handle_argument() {
     --force-replace)
       force_replace=true
       ;;
-    -b | --bukkit)
+    -t | --type)
       if ! has_argument $@; then
         echo "Bukkit type not specified." >&2
         usage
         exit 1
       fi
-      bukkit=$(extract_argument $@)
+      type=$(extract_argument $@)
       shift
       ;;
     *)
@@ -130,8 +130,8 @@ get_arch() {
 
 # check_java_version <minecraft_version>
 check_java_version() {
-  local version_url=$(get_mc_version_list | $library_directory/.jq -r ".[] | select(.id == \"$1\") | .url")
-  echo $(curl -s $version_url | $library_directory/.jq -r ".javaVersion.majorVersion")
+  local version_url=$(get_mc_version_list | $library_directory/jq -r ".[] | select(.id == \"$1\") | .url")
+  echo $(curl -s $version_url | $library_directory/jq -r ".javaVersion.majorVersion")
 }
 
 # install_java <java_version>
@@ -154,8 +154,8 @@ install_java() {
     local arch="aarch64"
   fi
 
-  if [ ! -d $library_directory/.java ]; then
-    mkdir -p $library_directory/.java
+  if [ ! -d $library_directory/java ]; then
+    mkdir -p $library_directory/java
   fi
 
   if [ $(contains "8 16 17 21" $java_version) = false ]; then
@@ -163,72 +163,83 @@ install_java() {
     exit 1
   fi
 
-  if [ ! -d "$library_directory/.java/$java_version" ]; then
+  if [ ! -d "$library_directory/java/$java_version" ]; then
     curl -sLO https://cdn.azul.com/zulu/bin/${JRE[$java_version]}-${os}_$arch.tar.gz
     tar -zxf ${JRE[$java_version]}-${os}_$arch.tar.gz -C $library_directory
-    mv $library_directory/${JRE[$java_version]}-${os}_$arch $library_directory/.java/$java_version
+    mv $library_directory/${JRE[$java_version]}-${os}_$arch $library_directory/java/$java_version
     rm ${JRE[$java_version]}-${os}_$arch.tar.gz
   fi
 }
 
 install_jq() {
-  if [ ! -e $library_directory/.jq ]; then
-    curl -s -o $library_directory/.jq -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-$(get_os)-$(get_arch)
-    chmod +x $library_directory/.jq
+  if [ ! -e $library_directory/jq ]; then
+    curl -s -o $library_directory/jq -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-$(get_os)-$(get_arch)
+    chmod +x $library_directory/jq
   fi
 }
 
 get_mc_version_list() {
-  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/.jq ".versions")
+  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq ".versions")
 }
 
 get_mc_latest_version() {
-  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/.jq -r ".latest.release")
+  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".latest.release")
 }
 
 # check_version_exist <minecraft_version>
 check_version_exist() {
   local version_=$1
-  local version_exist=$(get_mc_version_list | $library_directory/.jq ".[] | select(.id == \"$version_\") | .id")
+  local version_exist=$(get_mc_version_list | $library_directory/jq ".[] | select(.id == \"$version_\") | .id")
   if [ ! $version_exist ]; then
     echo "Version not found."
     exit 1
   fi
 }
 
-# get_server_file <minecraft_version> <bukkit>
+# get_server_file <minecraft_version> <bukkit> <remapped>
 get_server_file() {
   local version_=$1
-  local bukkit_=$2
+  local type_=$2
+  local remapped_=$3
   if [ $force_replace == true ]; then
     rm -f $server_directory/server.jar
+  fi
+  if [ -e $server_directory/bukkit.json ]; then
+    local before=$(cat $server_directory/bukkit.json)
+    local before_version=$(echo $before | $library_directory/jq -r ".version")
+    local before_type=$(echo $before | $library_directory/jq -r ".type")
+    local before_remapped=$(echo $before | $library_directory/jq -r ".remapped")
+    if [ $before_version != $version_ ] || [ $before_type != $type_ ] || [ $before_remapped != $remapped_ ]; then
+      rm -f $server_directory/server.jar
+    fi
   fi
   if [ -e $server_directory/server.jar ]; then
     return 0
   fi
-  case $bukkit_ in
+  case $type_ in
   "vanilla")
-    local version_url=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/.jq -r ".versions[] | select(.id == \"$version_\") | .url")
-    local server_file=$(curl -s $version_url | $library_directory/.jq -r ".downloads.server.url")
+    remapped_=false
+    local version_url=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".versions[] | select(.id == \"$version_\") | .url")
+    local server_file=$(curl -s $version_url | $library_directory/jq -r ".downloads.server.url")
     if [ $server_file == "null" ]; then
-      echo "Server file not found."
+      echo "Vanilla Server File could not be downloaded."
       exit 1
     else
-      echo $server_file
+      curl -s -o $server_directory/server.jar -L $server_file
     fi
     ;;
   "paper")
     local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$version_)
     if [ $status -ne 200 ]; then
-      echo "PaperMC Bukkit not found."
+      echo "PaperMC does not support this version."
       exit 1
     fi
-    local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$version_ | $library_directory/.jq -r ".builds[-1]")
-    local mojmap=$([ $remapped == true ] && echo "-mojmap" || echo "")
+    local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$version_ | $library_directory/jq -r ".builds[-1]")
+    local mojmap=$([ $remapped_ == true ] && echo "-mojmap" || echo "")
     local url="https://papermc.io/api/v2/projects/paper/versions/$version_/builds/$build_id/downloads/paper$mojmap-$version_-$build_id.jar"
     local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" $url)
     if [ $status -ne 200 ]; then
-      echo "PaperMC Bukkit not found."
+      echo "PaperMC Server File could not be downloaded."
       exit 1
     fi
     ;;
@@ -237,6 +248,7 @@ get_server_file() {
     exit 1
     ;;
   esac
+  echo "{\"type\":\"${type_}\",\"version\":\"${version_}\",\"remapped\":\"${remapped_}\"}" >$server_directory/bukkit.json
 }
 
 create_group_user() {
@@ -266,27 +278,28 @@ location_setting() {
   if [ ! -d $library_directory ]; then
     mkdir -p $library_directory
   fi
-
-  echo "eula=true" >$server_directory/eula.txt
 }
 
 # start_server <java_version> <ram>
 start_server() {
-  sudo -u $USER $library_directory/.java/$1/bin/java -Xms$2 -Xmx$2 -Dfile.encoding=utf-8 -jar $server_directory/server.jar nogui
+  echo "eula=true" >$server_directory/eula.txt
+  cd $server_directory
+  sudo -u $USER $library_directory/java/$1/bin/java -Xms$2 -Xmx$2 -Dfile.encoding=utf-8 -jar server.jar nogui
 }
 
 handle_argument "$@"
+
+set_timezone
+location_setting
+install_jq
 
 if [ $version == "latest" ]; then
   version=$(get_mc_latest_version)
 fi
 
-set_timezone
-location_setting
-install_jq
 check_version_exist $version
 java_version=$(check_java_version $version)
 install_java $java_version
-get_server_file $version $bukkit
+get_server_file $version $type $remapped
 create_group_user
 start_server $java_version $ram
