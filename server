@@ -289,6 +289,13 @@ start_server() {
 
 handle_argument "$@"
 
+if [ ${server_directory:0:1} != '/' ]; then
+  server_directory="$PWD/$server_directory"
+fi
+if [ ${library_directory:0:1} != '/' ]; then
+  library_directory="$PWD/$library_directory"
+fi
+
 set_timezone
 location_setting
 install_jq
