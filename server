@@ -204,7 +204,7 @@ get_server_file() {
   if [ $force_replace == true ]; then
     rm -f $server_directory/server.jar
   fi
-  if [ -e $server_directory/bukkit.json ]; then
+  if [ -e $server_directory/server.jar ] && [ -e $server_directory/bukkit.json ]; then
     local before=$(cat $server_directory/bukkit.json)
     local before_version=$(echo $before | $library_directory/jq -r ".version")
     local before_type=$(echo $before | $library_directory/jq -r ".type")
@@ -226,6 +226,14 @@ get_server_file() {
       exit 1
     else
       curl -s -o $server_directory/server.jar -L $server_file
+    fi
+    ;;
+  "spigot")
+    local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" https://download.getbukkit.org/spigot/spigot-$version_.jar)
+    if [ $status -ne 200 ]; then
+      echo "Spigot does not support this version."
+      rm -rf $server_directory/server.jar
+      exit 1
     fi
     ;;
   "paper")
