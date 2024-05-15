@@ -1,9 +1,9 @@
 #!/bin/bash
 version="latest"
-library_directory=~/.past2l
-server_directory=.
-ram="4G"
 type="paper"
+ram="4G"
+server_directory=.
+library_directory=~/.past2l
 remapped=false
 force_replace=false
 
@@ -270,7 +270,7 @@ create_group_user() {
   chown -R $UID:$GID $library_directory
 }
 
-location_setting() {
+directory_setting() {
   if [ ! -d $server_directory ]; then
     mkdir -p $server_directory
   fi
@@ -297,7 +297,7 @@ if [ ${library_directory:0:1} != '/' ]; then
 fi
 
 set_timezone
-location_setting
+directory_setting
 install_jq
 
 if [ $version == "latest" ]; then
