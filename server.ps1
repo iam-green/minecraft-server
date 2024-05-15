@@ -21,7 +21,6 @@ function Directory_Setting {
 
 function Get_MC_Version_List {
   return (Invoke-WebRequest -Uri "https://launchermeta.mojang.com/mc/game/version_manifest.json" | ConvertFrom-Json)
-
 }
 
 function Get_MC_Version_Latest {
@@ -42,8 +41,7 @@ function Check_Java_Version {
   param (
     [string]$version_ = $version
   )
-  $versions = (Get_MC_Version_List).versions
-  foreach ($item in $versions) {
+  foreach ($item in (Get_MC_Version_List).versions) {
     if ($item.id -eq $version_) {
       $version_url = $item.url
       break
@@ -91,13 +89,50 @@ function Get_Server_File {
   switch ($type_) {
     "vanilla" {
       $remapped_=false
-      # TODO: Download vanilla server.jar
+      foreach ($item in (Get_MC_Version_List).versions) {
+        if ($item.id -eq $version_) {
+          $version_url = $item.url
+          break
+        }
+      }
+      $url = (Invoke-WebRequest -Uri $version_url | ConvertFrom-Json).downloads.server.url
+      if ($url -eq $null) {
+        Write-Host "Vanilla Server does not support this version."
+        Exit
+      } else {
+        curl.exe -sfSLo $serverDirectory/server.jar $url
+      }
     }
     "paper" {
-      # TODO: Download paper server.jar
+      $response = Invoke-WebRequest -Uri "https://papermc.io/api/v2/projects/paper/versions/$version_" -Method Head
+      if ($response.StatusCode -ne 200) {
+        Write-Host "Paper Server does not support this version."
+        Exit
+      }
+      $build_id = (Invoke-WebRequest -Uri "https://papermc.io/api/v2/projects/paper/versions/$version_" | ConvertFrom-Json).builds[-1]
+      if ($remapped_) {
+        $mojmap = "-mojmap"
+      } else {
+        $mojmap = ""
+      }
+      $url = "https://papermc.io/api/v2/projects/paper/versions/$version_/builds/$build_id/downloads/paper$mojmap-$version_-$build_id.jar"
+      $response = Invoke-WebRequest -Uri $url -Method Head
+      if ($response.StatusCode -ne 200) {
+        Write-Host "PaperMC Server File could not be downloaded."
+        Exit
+      } else {
+        curl.exe -sfSLo $serverDirectory/server.jar $url
+      }
     }
     "spigot" {
-      # TODO: Download spigot server.jar
+      $url = "https://download.getbukkit.org/spigot/spigot-$version_.jar"
+      $response = Invoke-WebRequest -Uri $url -Method Head
+      if ($response.StatusCode -ne 200) {
+        Write-Host "Spigot Server does not support this version."
+        Exit
+      } else {
+        curl.exe -sfSLo $serverDirectory/server.jar $url
+      }
     }
     default {
       Write-Host "Invaild Bukkit type."

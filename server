@@ -222,7 +222,7 @@ get_server_file() {
     local version_url=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".versions[] | select(.id == \"$version_\") | .url")
     local server_file=$(curl -s $version_url | $library_directory/jq -r ".downloads.server.url")
     if [ $server_file == "null" ]; then
-      echo "Vanilla Server File could not be downloaded."
+      echo "Vanilla Server does not support this version."
       exit 1
     else
       curl -s -o $server_directory/server.jar -L $server_file
@@ -231,7 +231,7 @@ get_server_file() {
   "spigot")
     local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" https://download.getbukkit.org/spigot/spigot-$version_.jar)
     if [ $status -ne 200 ]; then
-      echo "Spigot does not support this version."
+      echo "Spigot Server does not support this version."
       rm -rf $server_directory/server.jar
       exit 1
     fi
@@ -239,7 +239,7 @@ get_server_file() {
   "paper")
     local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$version_)
     if [ $status -ne 200 ]; then
-      echo "PaperMC does not support this version."
+      echo "PaperMC Server does not support this version."
       exit 1
     fi
     local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$version_ | $library_directory/jq -r ".builds[-1]")
