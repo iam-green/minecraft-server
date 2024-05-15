@@ -2,6 +2,9 @@ name: Docker Project Build & Push
 
 on:
   push:
+    paths:
+      - "server"
+      - "Dockerfile"
     branches:
       - main
 
