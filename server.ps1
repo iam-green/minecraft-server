@@ -4,8 +4,9 @@ param (
   [string]$libraryDirectory = "$env:APPDATA/past2l",
   [string]$ram = "4G",
   [string]$type = "paper",
-  [bool]$remapped = $false,
-  [bool]$forceReplace = $false
+  [switch]$remapped,
+  [switch]$forceReplace,
+  [switch]$help
 )
 
 $now_location = Get-Location
@@ -72,7 +73,7 @@ function Get_Server_File {
   param (
     [string]$version_ = $version,
     [string]$type_ = $type,
-    [bool]$remapped_ = $remapped
+    [switch]$remapped_ = $remapped
   )
   if ($forceReplace) {
     Remove-Item -Path $serverDirectory/server.jar -Recurse -Force
@@ -156,6 +157,20 @@ function Start_Server {
   "eula=true" | Set-Content -Path eula.txt -Force
   Invoke-Expression "$libraryDirectory/java/$java_version/bin/java.exe -Xms$ram_ -Xmx$ram_ -jar server.jar nogui" 
   Set-Location -Path $now_location
+}
+
+if ($help) {
+  Write-Host "Usage: ${MyInvocation.MyCommand.Name} [OPTIONS]"
+  Write-Host "Options:"
+  Write-Host " -help                          Show this help and exit"
+  Write-Host " -version <version>             Select the Minecraft Server version"
+  Write-Host " -type <vanilla|paper|spigot>   Select the Bukkit type you want to install"
+  Write-Host " -ram <ram_size>                Select the amount of RAM you want to allocate to the server"
+  Write-Host " -serverDirectory <directory>   Select the path to install the Minecraft Server"
+  Write-Host " -libraryDirectory <directory>  Select the path to install the required libraries"
+  Write-Host " -remapped                      Select the remapped version of the server"
+  Write-Host " -forceReplace                  Force replace the existing server file"
+  Exit
 }
 
 $serverDirectory = Resolve-Path -Path $serverDirectory

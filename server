@@ -10,14 +10,14 @@ force_replace=false
 usage() {
   echo "Usage: $0 [OPTIONS]"
   echo "Options:"
-  echo " -h, --help                     Show this help and exit"
-  echo " -v, --version                  Select the Minecraft Server version"
-  echo " -t, --type                     Select the Bukkit type you want to install"
-  echo " -r, --ram                      Select the amount of RAM you want to allocate to the server"
-  echo " -d, -sd, --server-directory    Select the path to install the Minecraft Server"
-  echo " -ld, --library-directory       Select the path to install the required libraries"
-  echo " --remapped                     Select the remapped version of the server"
-  echo " --force-replace                Force replace the existing server file"
+  echo " -h, --help                               Show this help and exit"
+  echo " -v, --version <version>                  Select the Minecraft Server version"
+  echo " -t, --type <vanilla|paper|spigot>        Select the Bukkit type you want to install"
+  echo " -r, --ram <ram_size>                     Select the amount of RAM you want to allocate to the server"
+  echo " -d, -sd, --server-directory <directory>  Select the path to install the Minecraft Server"
+  echo " -ld, --library-directory <directory>     Select the path to install the required libraries"
+  echo " --remapped                               Select the remapped version of the server"
+  echo " --force-replace                          Force replace the existing server file"
 }
 
 has_argument() {
