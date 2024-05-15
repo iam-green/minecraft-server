@@ -26,7 +26,6 @@ jobs:
           echo "REPO=${REPO,,}" >> $GITHUB_OUTPUT
           echo "REPO_NAME=${REPO_NAME,,}" >> $GITHUB_OUTPUT
           echo "GHCR_REPO=ghcr.io/${OWNER,,}/${REPO_NAME,,}" >> $GITHUB_OUTPUT
-          echo "${{ secrets.ENV }}" >> $GITHUB_OUTPUT
       - uses: actions/checkout@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
