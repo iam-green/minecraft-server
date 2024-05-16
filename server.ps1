@@ -75,7 +75,7 @@ function Get_Server_File {
     [string]$type_ = $type,
     [switch]$remapped_ = $remapped
   )
-  if ($forceReplace) {
+  if ($forceReplace -and (Test-Path -Path $serverDirectory/server.jar)) {
     Remove-Item -Path $serverDirectory/server.jar -Recurse -Force
   }
   if ((Test-Path -Path $serverDirectory/server.jar) -and (Test-Path -Path $serverDirectory/bukkit.json)) {
@@ -173,9 +173,9 @@ if ($help) {
   Exit
 }
 
+Directory_Setting
 $serverDirectory = Resolve-Path -Path $serverDirectory
 $libraryDirectory = Resolve-Path -Path $libraryDirectory
-Directory_Setting
 
 if ($version -eq "latest") {
   $version = Get_MC_Version_Latest
