@@ -6,10 +6,15 @@ param (
   [string]$type = "paper",
   [switch]$remapped,
   [switch]$forceReplace,
-  [switch]$help
+  [switch]$help,
+  [string]$v,
+  [string]$d,
+  [string]$sd,
+  [string]$ld,
+  [string]$r,
+  [string]$t,
+  [switch]$h
 )
-
-$now_location = Get-Location
 
 function Directory_Setting {
   $directory = @($serverDirectory, $libraryDirectory)
@@ -89,7 +94,7 @@ function Get_Server_File {
   }
   switch ($type_) {
     "vanilla" {
-      $remapped_=false
+      $remapped_=$false
       foreach ($item in (Get_MC_Version_List).versions) {
         if ($item.id -eq $version_) {
           $version_url = $item.url
@@ -126,6 +131,7 @@ function Get_Server_File {
       }
     }
     "spigot" {
+      $remapped_=$false
       $url = "https://download.getbukkit.org/spigot/spigot-$version_.jar"
       $response = Invoke-WebRequest -Uri $url -Method Head
       if ($response.StatusCode -ne 200) {
@@ -159,18 +165,27 @@ function Start_Server {
   Set-Location -Path $now_location
 }
 
-if ($help) {
+if ($help -or $h) {
   Write-Host "Options:"
-  Write-Host " -help                          Show this help and exit"
-  Write-Host " -version <version>             Select the Minecraft Server version"
-  Write-Host " -type <vanilla|paper|spigot>   Select the Bukkit type you want to install"
-  Write-Host " -ram <ram_size>                Select the amount of RAM you want to allocate to the server"
-  Write-Host " -serverDirectory <directory>   Select the path to install the Minecraft Server"
-  Write-Host " -libraryDirectory <directory>  Select the path to install the required libraries"
-  Write-Host " -remapped                      Select the remapped version of the server"
-  Write-Host " -forceReplace                  Force replace the existing server file"
+  Write-Host " -h, -help                              Show this help and exit"
+  Write-Host " -v, -version <version>                 Select the Minecraft Server version"
+  Write-Host " -t, -type <vanilla|paper|spigot>       Select the Bukkit type you want to install"
+  Write-Host " -r, -ram <ram_size>                    Select the amount of RAM you want to allocate to the server"
+  Write-Host " -d, -sd, -serverDirectory <directory>  Select the path to install the Minecraft Server"
+  Write-Host " -ld, -libraryDirectory <directory>     Select the path to install the required libraries"
+  Write-Host " -remapped                              Select the remapped version of the server"
+  Write-Host " -forceReplace                          Force replace the existing server file"
   Exit
 }
+
+$now_location = Get-Location
+
+if ($v) { $version = $v }
+if ($d) { $serverDirectory = $d }
+if ($sd) { $serverDirectory = $sd }
+if ($ld) { $libraryDirectory = $ld }
+if ($r) { $ram = $r }
+if ($t) { $type = $t }
 
 Directory_Setting
 $serverDirectory = Resolve-Path -Path $serverDirectory
