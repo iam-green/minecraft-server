@@ -97,7 +97,7 @@ function Get_Server_File {
         }
       }
       $url = (Invoke-WebRequest -Uri $version_url | ConvertFrom-Json).downloads.server.url
-      if ($url -eq $null) {
+      if ($null -eq $url) {
         Write-Host "Vanilla Server does not support this version."
         Exit
       } else {
@@ -160,7 +160,6 @@ function Start_Server {
 }
 
 if ($help) {
-  Write-Host "Usage: ${MyInvocation.MyCommand.Name} [OPTIONS]"
   Write-Host "Options:"
   Write-Host " -help                          Show this help and exit"
   Write-Host " -version <version>             Select the Minecraft Server version"
