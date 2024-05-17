@@ -134,40 +134,33 @@ check_java_version() {
   echo $(curl -s $version_url | $library_directory/jq -r ".javaVersion.majorVersion")
 }
 
-# install_java <java_version>
-install_java() {
-  declare -a JRE
-  JRE[8]=zulu8.74.0.17-ca-jre8.0.392
-  JRE[16]=zulu16.32.15-ca-jre16.0.2
-  JRE[17]=zulu17.46.19-ca-jre17.0.9
-  JRE[21]=zulu21.34.19-ca-jre21.0.3
-
+# get_java_file_name <java_version> <os> <architecture>
+get_java_file_name() {
   local java_version=$1
-  if [ $(get_os) == "macos" ]; then
-    local os="macosx"
-  else
-    local os="linux"
-  fi
-  if [ $(get_arch) == "amd64" ]; then
-    local arch="x64"
-  else
-    local arch="aarch64"
-  fi
+  local os=$2
+  local arch=$3
+  local name=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=$java_version&os=$os&arch=$arch&java_package_type=jre&page=1&page_size=1&release_status=ga&availability_types=CA&certifications=tck&archive_type=tar.gz" | $library_directory/jq -r ".[0].name")
+  echo "${name//.tar.gz/}"
+}
+
+# install_java <java_version> <os> <architecture>
+install_java() {
+  local java_version=$1
+  local os=$2
+  local arch=$3
 
   if [ ! -d $library_directory/java ]; then
     mkdir -p $library_directory/java
   fi
 
-  if [ $(contains "8 16 17 21" $java_version) = false ]; then
-    echo "Invalid Java version."
-    exit 1
-  fi
+  local java_name=$(get_java_file_name $java_version $os $arch)
+  echo $java_name
 
   if [ ! -d "$library_directory/java/$java_version" ]; then
-    curl -sLO https://cdn.azul.com/zulu/bin/${JRE[$java_version]}-${os}_$arch.tar.gz
-    tar -zxf ${JRE[$java_version]}-${os}_$arch.tar.gz -C $library_directory
-    mv $library_directory/${JRE[$java_version]}-${os}_$arch $library_directory/java/$java_version
-    rm ${JRE[$java_version]}-${os}_$arch.tar.gz
+    curl -sLO https://cdn.azul.com/zulu/bin/$java_name.tar.gz
+    tar -zxf $java_name.tar.gz -C $library_directory
+    mv $library_directory/$java_name $library_directory/java/$java_version
+    rm $java_name.tar.gz
   fi
 }
 
@@ -314,7 +307,7 @@ fi
 
 check_version_exist $version
 java_version=$(check_java_version $version)
-install_java $java_version
+install_java $java_version $(get_os) $(get_arch)
 get_server_file $version $type $remapped
 create_group_user
 start_server $java_version $ram

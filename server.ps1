@@ -56,20 +56,23 @@ function Check_Java_Version {
   return (Invoke-WebRequest -Uri $version_url | ConvertFrom-Json).javaVersion.majorVersion
 }
 
+function Get_Java_File_Name {
+  param (
+    [string]$version_ = $version
+  )
+  $name = (Invoke-WebRequest -Uri "https://api.azul.com/metadata/v1/zulu/packages/?java_version=$version_&os=windows&arch=amd64&java_package_type=jre&page=1&page_size=1&release_status=ga&availability_types=CA&certifications=tck&archive_type=zip" | ConvertFrom-Json)[0].name
+  return $name -replace '.zip'
+}
+
 function Install_Java {
   param (
     [string]$version = $java_version
   )
-  $ZULU_VERSIONS = @{
-    8 = "zulu8.74.0.17-ca-jre8.0.392"
-    16 = "zulu16.32.15-ca-jre16.0.2"
-    17 = "zulu17.46.19-ca-jre17.0.9"
-    21 = "zulu21.34.19-ca-jre21.0.3"
-  }
+  $java_name = Get_Java_File_Name $version
   if (-not (Test-Path -Path $libraryDirectory/java/$JAVA_VERSION)) {
-    curl.exe -sfSLo ./$JAVA_VERSION.zip https://cdn.azul.com/zulu/bin/$($ZULU_VERSIONS[$JAVA_VERSION])-win_x64.zip
+    curl.exe -sfSLo ./$JAVA_VERSION.zip https://cdn.azul.com/zulu/bin/$java_name.zip
     Expand-Archive -Path ./$JAVA_VERSION.zip -DestinationPath $libraryDirectory/java -Force
-    Move-Item -Path $libraryDirectory/java/$($ZULU_VERSIONS[$JAVA_VERSION])-win_x64 -Destination $libraryDirectory/java/$JAVA_VERSION -Force
+    Move-Item -Path $libraryDirectory/java/$java_name -Destination $libraryDirectory/java/$JAVA_VERSION -Force
     Remove-Item -Path ./$JAVA_VERSION.zip -Recurse -Force
   }
 }
