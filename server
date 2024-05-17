@@ -154,7 +154,6 @@ install_java() {
   fi
 
   local java_name=$(get_java_file_name $java_version $os $arch)
-  echo $java_name
 
   if [ ! -d "$library_directory/java/$java_version" ]; then
     curl -sLO https://cdn.azul.com/zulu/bin/$java_name.tar.gz
