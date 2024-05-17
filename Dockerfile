@@ -14,4 +14,4 @@ RUN apt-get update
 RUN apt-get install -y curl sudo
 COPY server $SERVER_DIRECTORY
 RUN chmod +x server
-ENTRYPOINT ./server -v $VERSION -t $TYPE -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY
+ENTRYPOINT ./server -v $VERSION -t $TYPE -r $RAM -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY
