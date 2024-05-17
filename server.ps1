@@ -83,7 +83,7 @@ function Get_Server_File {
     [string]$type_ = $type,
     [switch]$remapped_ = $remapped
   )
-  if ($forceReplace -and (Test-Path -Path $serverDirectory/server.jar)) {
+  if ((($forceReplace -or (Test-Path -Path $serverDirectory/bukkit.json)) -or (Test-Path -Path $serverDirectory/server.jar))) {
     Remove-Item -Path $serverDirectory/server.jar -Recurse -Force
   }
   if ((Test-Path -Path $serverDirectory/server.jar) -and (Test-Path -Path $serverDirectory/bukkit.json)) {

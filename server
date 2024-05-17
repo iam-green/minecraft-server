@@ -194,7 +194,7 @@ get_server_file() {
   local version_=$1
   local type_=$2
   local remapped_=$3
-  if [ $force_replace == true ]; then
+  if [ $force_replace == true ] || [ ! -e $server_directory/bukkit.json ]; then
     rm -f $server_directory/server.jar
   fi
   if [ -e $server_directory/server.jar ] && [ -e $server_directory/bukkit.json ]; then
