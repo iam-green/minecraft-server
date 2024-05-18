@@ -304,9 +304,9 @@ if [ $version == "latest" ]; then
   version=$(get_mc_latest_version)
 fi
 
+create_group_user
 check_version_exist $version
 java_version=$(check_java_version $version)
 install_java $java_version $(get_os) $(get_arch)
 get_server_file $version $type $remapped
-create_group_user
 start_server $java_version $ram
