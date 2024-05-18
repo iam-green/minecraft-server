@@ -7,11 +7,12 @@ ENV TZ=Asia/Seoul \
   RAM=4096M \
   VERSION=latest \
   TYPE=paper \
-  SERVER_DIRECTORY=/app \
-  LIBRARY_DIRECTORY=/lib
-WORKDIR $SERVER_DIRECTORY
+  SERVER_DIRECTORY=/mc/app \
+  LIBRARY_DIRECTORY=/mc/lib
+RUN mkdir -p /mc
+WORKDIR /mc
 RUN apt-get update
 RUN apt-get install -y curl sudo
-COPY server $SERVER_DIRECTORY
+COPY server .
 RUN chmod +x server
-ENTRYPOINT ./server -v $VERSION -t $TYPE -r $RAM -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY
+CMD ./server -v $VERSION -t $TYPE -r $RAM -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY

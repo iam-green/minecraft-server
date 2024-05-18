@@ -19,8 +19,8 @@ docker create -it -name minecraft-server ghcr.io/past2l/minecraft-server
 |GID|Set Group ID|`1000`|
 |VERSION|Set Minecraft Version|`latest`|
 |TYPE|Set Minecraft Bukkit Type<br>(`vanilla`, `paper`, `spigot`)|`paper`|
-|SERVER_DIRECTORY|Set Minecraft Server Directory|`/app`|
-|SERVER_DIRECTORY|Set Library Directory|`/lib`|
+|SERVER_DIRECTORY|Set Minecraft Server Directory|`/mc/app`|
+|SERVER_DIRECTORY|Set Library Directory|`/mc/lib`|
 ## Windows
 
 ### Setup Command
