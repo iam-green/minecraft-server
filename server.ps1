@@ -26,7 +26,7 @@ function Directory_Setting {
 }
 
 function Get_MC_Version_List {
-  return (Invoke-WebRequest -Uri "https://launchermeta.mojang.com/mc/game/version_manifest.json" | ConvertFrom-Json)
+  return (curl.exe -s "https://launchermeta.mojang.com/mc/game/version_manifest.json" | ConvertFrom-Json)
 }
 
 function Get_MC_Version_Latest {
@@ -53,14 +53,14 @@ function Check_Java_Version {
       break
     }
   }
-  return (Invoke-WebRequest -Uri $version_url | ConvertFrom-Json).javaVersion.majorVersion
+  return (curl.exe -s $version_url | ConvertFrom-Json).javaVersion.majorVersion
 }
 
 function Get_Java_File_Name {
   param (
     [string]$version_ = $version
   )
-  $name = (Invoke-WebRequest -Uri "https://api.azul.com/metadata/v1/zulu/packages/?java_version=$version_&os=windows&arch=amd64&java_package_type=jre&page=1&page_size=1&release_status=ga&availability_types=CA&certifications=tck&archive_type=zip" | ConvertFrom-Json)[0].name
+  $name = (curl.exe -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=$version_&os=windows&arch=amd64&java_package_type=jre&page=1&page_size=1&release_status=ga&availability_types=CA&certifications=tck&archive_type=zip" | ConvertFrom-Json)[0].name
   return $name -replace '.zip'
 }
 
@@ -104,7 +104,7 @@ function Get_Server_File {
           break
         }
       }
-      $url = (Invoke-WebRequest -Uri $version_url | ConvertFrom-Json).downloads.server.url
+      $url = (curl.exe -s $version_url | ConvertFrom-Json).downloads.server.url
       if ($null -eq $url) {
         Write-Host "Vanilla Server does not support this version."
         Exit
@@ -118,7 +118,7 @@ function Get_Server_File {
         Write-Host "Paper Server does not support this version."
         Exit
       }
-      $build_id = (Invoke-WebRequest -Uri "https://papermc.io/api/v2/projects/paper/versions/$version_" | ConvertFrom-Json).builds[-1]
+      $build_id = (curl.exe -s  "https://papermc.io/api/v2/projects/paper/versions/$version_" | ConvertFrom-Json).builds[-1]
       if ($remapped_) {
         $mojmap = "-mojmap"
       } else {
