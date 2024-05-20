@@ -7,13 +7,15 @@ param (
   [switch]$remapped,
   [switch]$forceReplace,
   [switch]$help,
+  [switch]$update,
   [string]$v,
   [string]$d,
   [string]$sd,
   [string]$ld,
   [string]$r,
   [string]$t,
-  [switch]$h
+  [switch]$h,
+  [switch]$u
 )
 
 function Directory_Setting {
@@ -176,9 +178,16 @@ if ($help -or $h) {
   Write-Host " -r, -ram <ram_size>                    Select the amount of RAM you want to allocate to the server"
   Write-Host " -d, -sd, -serverDirectory <directory>  Select the path to install the Minecraft Server"
   Write-Host " -ld, -libraryDirectory <directory>     Select the path to install the required libraries"
+  Write-Host " -u, -update                            Update the script to the latest version"
   Write-Host " -remapped                              Select the remapped version of the server"
   Write-Host " -forceReplace                          Force replace the existing server file"
   Exit
+}
+
+if ($update -or $u) {
+  curl.exe -sfSLo .\server.ps1 "https://raw.githubusercontent.com/Past2l/minecraft-server/main/server.ps1"
+  Write-Host "The update is complete, please re-run the code."
+  exit
 }
 
 $now_location = Get-Location

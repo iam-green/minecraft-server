@@ -36,6 +36,7 @@ docker create -it -name minecraft-server ghcr.io/past2l/minecraft-server
   -r, -ram <ram_size>                    Select the amount of RAM you want to allocate to the server
   -d, -sd, -serverDirectory <directory>  Select the path to install the Minecraft Server
   -ld, -libraryDirectory <directory>     Select the path to install the required libraries
+  -u, -update                            Update the script to the latest version
   -remapped                              Select the remapped version of the server
   -forceReplace                          Force replace the existing server file
 ```
@@ -54,6 +55,7 @@ chmod +x ./server && ./server
   -r, --ram <ram_size>                     Select the amount of RAM you want to allocate to the server
   -d, -sd, --server-directory <directory>  Select the path to install the Minecraft Server
   -ld, --library-directory <directory>     Select the path to install the required libraries
+  -u, --update                             Update the script to the latest version
   --remapped                               Select the remapped version of the server
   --force-replace                          Force replace the existing server file
 ```

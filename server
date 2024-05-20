@@ -16,6 +16,7 @@ usage() {
   echo " -r, --ram <ram_size>                     Select the amount of RAM you want to allocate to the server"
   echo " -d, -sd, --server-directory <directory>  Select the path to install the Minecraft Server"
   echo " -ld, --library-directory <directory>     Select the path to install the required libraries"
+  echo " -u, --update                             Update the script to the latest version"
   echo " --remapped                               Select the remapped version of the server"
   echo " --force-replace                          Force replace the existing server file"
 }
@@ -85,6 +86,12 @@ handle_argument() {
       fi
       type=$(extract_argument $@)
       shift
+      ;;
+    -u | --update)
+      curl -s -o ./server -L https://raw.githubusercontent.com/Past2l/minecraft-server/main/server
+      chmod +x ./server
+      echo The update is complete, please re-run the code.
+      exit 0
       ;;
     *)
       echo "Invalid option: $1" >&2
