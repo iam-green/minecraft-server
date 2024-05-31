@@ -273,7 +273,6 @@ create_group_user() {
   fi
 
   USER=$(getent passwd "$UID" | cut -d: -f1)
-  chown -R $UID:$GID $server_directory $library_directory
 }
 
 directory_setting() {
@@ -284,6 +283,10 @@ directory_setting() {
   if [ ! -d $library_directory ]; then
     mkdir -p $library_directory
   fi
+}
+
+set_chown() {
+  chown -R $USER $server_directory $library_directory
 }
 
 # start_server <java_version> <ram>
@@ -315,4 +318,5 @@ check_version_exist $version
 java_version=$(check_java_version $version)
 install_java $java_version $(get_os) $(get_arch)
 get_server_file $version $type $remapped
+set_chown
 start_server $java_version $ram
