@@ -1,9 +1,9 @@
 FROM ubuntu:20.04
 LABEL maintainer="Past2l <yundohyun050121@gmail.com>"
 ARG DEBIAN_FRONTEND=noninteractive
-ENV TZ=Asia/Seoul \
-  UID=1000 \
+ENV UID=1000 \
   GID=1000 \
+  TZ=Asia/Seoul \
   RAM=4096M \
   VERSION=latest \
   TYPE=paper \

@@ -259,7 +259,8 @@ get_server_file() {
 }
 
 create_group_user() {
-  if [ ! $UID ] || [ ! $GID ] || id "$UID" &>/dev/null || id "$UID" &>/dev/null; then
+  if [ ! $UID ] || [ ! $GID ] || id -u $UID >/dev/null 2>&1 || getent group $GID >/dev/null 2>&1; then
+    USER=$(getent passwd "$UID" | cut -d: -f1)
     return 0
   fi
 
@@ -272,9 +273,7 @@ create_group_user() {
   fi
 
   USER=$(getent passwd "$UID" | cut -d: -f1)
-
-  chown -R $UID:$GID $server_directory
-  chown -R $UID:$GID $library_directory
+  chown -R $UID:$GID $server_directory $library_directory
 }
 
 directory_setting() {

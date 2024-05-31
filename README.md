@@ -8,7 +8,8 @@
 
 ### Setup Command
 ```bash
-docker create -it -name minecraft-server ghcr.io/past2l/minecraft-server
+docker create -it -name minecraft-server -p 25565:25565 \
+  ghcr.io/past2l/minecraft-server
 ```
 
 ### Environments
@@ -18,9 +19,10 @@ docker create -it -name minecraft-server ghcr.io/past2l/minecraft-server
 |UID|Set User ID|`1000`|
 |GID|Set Group ID|`1000`|
 |VERSION|Set Minecraft Version|`latest`|
+|RAM|Set Minecraft Server RAM|`4096M`|
 |TYPE|Set Minecraft Bukkit Type<br>(`vanilla`, `paper`, `spigot`)|`paper`|
 |SERVER_DIRECTORY|Set Minecraft Server Directory|`/mc/app`|
-|SERVER_DIRECTORY|Set Library Directory|`/mc/lib`|
+|LIBRARY_DIRECTORY|Set Library Directory|`/mc/lib`|
 ## Windows
 
 ### Setup Command
