@@ -185,6 +185,10 @@ get_mc_latest_version() {
   echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".latest.release")
 }
 
+get_mc_snapshot_version() {
+  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".latest.snapshot")
+}
+
 # check_version_exist <minecraft_version>
 check_version_exist() {
   local version_=$1
@@ -311,6 +315,11 @@ install_jq
 
 if [ $version == "latest" ]; then
   version=$(get_mc_latest_version)
+fi
+if [ $version == "snapshot" ]; then
+  type="vanilla"
+  version=$(get_mc_snapshot_version)
+  remapped=false
 fi
 
 create_group_user

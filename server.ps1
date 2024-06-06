@@ -31,9 +31,9 @@ function Get_MC_Version_List {
   return (curl.exe -s "https://launchermeta.mojang.com/mc/game/version_manifest.json" | ConvertFrom-Json)
 }
 
-function Get_MC_Version_Latest {
-  return (Get_MC_Version_List).latest.release
-}
+function Get_MC_Version_Latest { return (Get_MC_Version_List).latest.release }
+
+function Get_MC_Version_Snapshot { return (Get_MC_Version_List).latest.snapshot }
 
 function Check_Version_Exist {
   param (
@@ -203,8 +203,11 @@ Directory_Setting
 $serverDirectory = Resolve-Path -Path $serverDirectory
 $libraryDirectory = Resolve-Path -Path $libraryDirectory
 
-if ($version -eq "latest") {
-  $version = Get_MC_Version_Latest
+if ($version -eq "latest") { $version = Get_MC_Version_Latest }
+if ($version -eq "snapshot") {
+  $type = "vanilla"
+  $version = Get_MC_Version_Snapshot
+  $remapped = $false
 }
 
 Check_Version_Exist $version
