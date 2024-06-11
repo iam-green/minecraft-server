@@ -232,6 +232,7 @@ get_server_file() {
     fi
     ;;
   "spigot")
+    remapped_=false
     local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" https://download.getbukkit.org/spigot/spigot-$version_.jar)
     if [ $status -ne 200 ]; then
       echo "Spigot Server does not support this version."
