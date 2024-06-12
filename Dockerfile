@@ -19,6 +19,7 @@ RUN apt-get install -y curl sudo
 COPY server .
 RUN chmod +x server
 EXPOSE 25565/tcp
-CMD ./server -v $VERSION -t $TYPE -r $RAM -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY \
+CMD ./server -v $VERSION -t $TYPE -r $RAM \
+  -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY \
   $( [ "$FORCE_REPLACE" = "true" ] && echo "--force-replace" || echo "" ) \
   $( [ "$REMAPPED" = "true" ] && echo "--remapped" || echo "" )
