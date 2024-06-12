@@ -4,8 +4,8 @@ set -e
 version="latest"
 type="paper"
 ram="4G"
-server_directory=$(realpath .)
-library_directory=$(realpath ~/.past2l)
+server_directory=.
+library_directory=~/.past2l
 remapped=false
 force_replace=false
 
@@ -53,7 +53,7 @@ handle_argument() {
         usage
         exit 1
       fi
-      server_directory=$(realpath $(extract_argument $@))
+      server_directory=$(extract_argument $@)
       shift
       ;;
     -ld | --library-directory)
@@ -62,7 +62,7 @@ handle_argument() {
         usage
         exit 1
       fi
-      library_directory=$(realpath $(extract_argument $@))
+      library_directory=$(extract_argument $@)
       shift
       ;;
     -r | --ram)
@@ -283,13 +283,9 @@ create_group_user() {
 }
 
 directory_setting() {
-  if [ ! -d $server_directory ]; then
-    mkdir -p $server_directory
-  fi
-
-  if [ ! -d $library_directory ]; then
-    mkdir -p $library_directory
-  fi
+  mkdir -p $server_directory $library_directory
+  server_directory=$(realpath $server_directory)
+  library_directory=$(realpath $library_directory)
 }
 
 set_chown() {
