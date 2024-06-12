@@ -267,7 +267,7 @@ get_server_file() {
 
 create_group_user() {
   if [ ! $UID ] || [ ! $GID ] || id -u $UID >/dev/null 2>&1 || getent group $GID >/dev/null 2>&1; then
-    USER=$(getent passwd "$UID" | cut -d: -f1)
+    USER=$([ $(uname) = "Darwin" ] && id -un $UID || getent passwd "$UID" | cut -d: -f1)
     return 0
   fi
 
@@ -279,7 +279,7 @@ create_group_user() {
     useradd -u "$UID" -g "$GID" -m minecraft
   fi
 
-  USER=$(getent passwd "$UID" | cut -d: -f1)
+  USER=$([ $(uname) = "Darwin" ] && id -un $UID || getent passwd "$UID" | cut -d: -f1)
 }
 
 directory_setting() {
