@@ -298,7 +298,7 @@ set_chown() {
 start_server() {
   echo "eula=true" >$server_directory/eula.txt
   cd $server_directory
-  sudo -u $USER $library_directory/java/$1/bin/java -Xms$2 -Xmx$2 -Dfile.encoding=utf-8 -jar server.jar nogui
+  sudo -u $USER $library_directory/java/$1/bin/java -Xmx$2 -Dfile.encoding=utf-8 -jar server.jar nogui
 }
 
 handle_argument "$@"

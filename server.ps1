@@ -166,7 +166,7 @@ function Start_Server {
   )
   Set-Location -Path $serverDirectory
   "eula=true" | Set-Content -Path eula.txt -Force
-  Invoke-Expression "$libraryDirectory/java/$java_version/bin/java.exe -Xms$ram_ -Xmx$ram_ -jar server.jar nogui" 
+  Invoke-Expression "$libraryDirectory/java/$java_version/bin/java.exe -Xmx$ram_ -jar server.jar nogui" 
   Set-Location -Path $now_location
 }
 
