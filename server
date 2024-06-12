@@ -283,7 +283,12 @@ create_group_user() {
 }
 
 directory_setting() {
-  mkdir -p $server_directory $library_directory
+  if [ ! -d $server_directory ]; then
+    mkdir -p $server_directory
+  fi
+  if [ ! -d $library_directory ]; then
+    mkdir -p $library_directory
+  fi
   server_directory=$(realpath $server_directory)
   library_directory=$(realpath $library_directory)
 }
