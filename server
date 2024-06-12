@@ -1,9 +1,11 @@
 #!/bin/bash
+set -e
+
 version="latest"
 type="paper"
 ram="4G"
-server_directory=.
-library_directory=~/.past2l
+server_directory=$(realpath .)
+library_directory=$(realpath ~/.past2l)
 remapped=false
 force_replace=false
 
@@ -51,7 +53,7 @@ handle_argument() {
         usage
         exit 1
       fi
-      server_directory=$(extract_argument $@)
+      server_directory=$(realpath $(extract_argument $@))
       shift
       ;;
     -ld | --library-directory)
@@ -60,7 +62,7 @@ handle_argument() {
         usage
         exit 1
       fi
-      library_directory=$(extract_argument $@)
+      library_directory=$(realpath $(extract_argument $@))
       shift
       ;;
     -r | --ram)
@@ -302,13 +304,6 @@ start_server() {
 }
 
 handle_argument "$@"
-
-if [ ${server_directory:0:1} != '/' ]; then
-  server_directory="$PWD/$server_directory"
-fi
-if [ ${library_directory:0:1} != '/' ]; then
-  library_directory="$PWD/$library_directory"
-fi
 
 set_timezone
 directory_setting
