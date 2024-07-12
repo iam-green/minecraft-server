@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 LABEL maintainer="Past2l <yundohyun050121@gmail.com>"
-LABEL org.opencontainers.image.source https://github.com/past2l/zomboid-server
+LABEL org.opencontainers.image.source https://github.com/past2l/minecraft-server
 ARG DEBIAN_FRONTEND=noninteractive
 ENV UID=1000 \
   GID=1000 \
