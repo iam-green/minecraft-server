@@ -8,13 +8,15 @@ server_directory=.
 library_directory=~/.iam-green
 remapped=false
 force_replace=false
+mod_version="latest"
 
 usage() {
   echo "Usage: $0 [OPTIONS]"
   echo "Options:"
   echo " -h, --help                               Show this help and exit"
   echo " -v, --version <version>                  Select the Minecraft Server version"
-  echo " -t, --type <vanilla|paper|spigot>        Select the Bukkit type you want to install"
+  echo " -m, --mod-version <version>              Select the Minecraft Mod Server version"
+  echo " -t, --type <vanilla|paper|fabric>        Select the Bukkit type you want to install"
   echo " -r, --ram <ram_size>                     Select the amount of RAM you want to allocate to the server"
   echo " -d, -sd, --server-directory <directory>  Select the path to install the Minecraft Server"
   echo " -ld, --library-directory <directory>     Select the path to install the required libraries"
@@ -72,6 +74,15 @@ handle_argument() {
         exit 1
       fi
       ram=$(extract_argument $@)
+      shift
+      ;;
+    -m | --mod-version)
+      if ! has_argument $@; then
+        echo "Mod Version not specified." >&2
+        usage
+        exit 1
+      fi
+      mod_version=$(extract_argument $@)
       shift
       ;;
     --remapped)
@@ -201,11 +212,12 @@ check_version_exist() {
   fi
 }
 
-# get_server_file <minecraft_version> <bukkit> <remapped>
+# get_server_file <minecraft_version> <bukkit> <remapped> <mod_version>
 get_server_file() {
   local version_=$1
   local type_=$2
   local remapped_=$3
+  local mod_version_=$4
   if [ $force_replace == true ] || [ ! -e $server_directory/bukkit.json ]; then
     rm -f $server_directory/server.jar
   fi
@@ -245,6 +257,21 @@ get_server_file() {
     local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" $url)
     if [ $status -ne 200 ]; then
       echo "PaperMC Server File could not be downloaded."
+      exit 1
+    fi
+    ;;
+  "fabric")
+    remapped_=false
+    local installer_version=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq -r ".[0].version")
+    mod_version_=$([ $mod_version_ == 'latest' ] && echo $(curl -s https://meta.fabricmc.net/v2/versions/loader | jq -r '.[0].version') || echo $(curl -s https://meta.fabricmc.net/v2/versions/loader | jq -r ".[] | select(.version==\"$mod_version_\") | .version"))
+    if [ ! $mod_version_ ]; then
+      echo "Fabric Loader does not support this version."
+      exit 1
+    fi
+    local fabric_bukkit="https://meta.fabricmc.net/v2/versions/loader/$version_/$mod_version_/$installer_version/server/jar"
+    local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" $fabric_bukkit)
+    if [ $status -ne 200 ]; then
+      echo "Fabric Server File could not be downloaded."
       exit 1
     fi
     ;;
@@ -314,6 +341,6 @@ create_group_user
 check_version_exist $version
 java_version=$(check_java_version $version)
 install_java $java_version $(get_os) $(get_arch)
-get_server_file $version $type $remapped
+get_server_file $version $type $remapped $mod_version
 set_chown
 start_server $java_version $ram

@@ -11,7 +11,8 @@ ENV UID=1000 \
   FORCE_REPLACE=false \
   REMAPPED=false \
   SERVER_DIRECTORY=/mc/app \
-  LIBRARY_DIRECTORY=/mc/lib
+  LIBRARY_DIRECTORY=/mc/lib \
+  MOD_VERSION=latest
 RUN mkdir -p /mc
 WORKDIR /mc
 RUN apt-get update
@@ -19,7 +20,7 @@ RUN apt-get install -y curl sudo
 COPY server .
 RUN chmod +x server
 EXPOSE 25565/tcp
-CMD ./server -v $VERSION -t $TYPE -r $RAM \
+CMD ./server -v $VERSION -t $TYPE -r $RAM -m $MOD_VERSION \
   -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY \
   $( [ "$FORCE_REPLACE" = "true" ] && echo "--force-replace" || echo "" ) \
   $( [ "$REMAPPED" = "true" ] && echo "--remapped" || echo "" )

@@ -1,5 +1,6 @@
 param (
   [string]$version = "latest",
+  [string]$modVersion = "latest",
   [string]$serverDirectory = ".",
   [string]$libraryDirectory = "$env:APPDATA/iam-green",
   [string]$ram = "4G",
@@ -14,6 +15,7 @@ param (
   [string]$ld,
   [string]$r,
   [string]$t,
+  [string]$m,
   [switch]$h,
   [switch]$u
 )
@@ -83,6 +85,7 @@ function Get_Server_File {
   param (
     [string]$version_ = $version,
     [string]$type_ = $type,
+    [string]$modVersion_ = $modVersion,
     [switch]$remapped_ = $remapped
   )
   if ((($forceReplace -or (Test-Path -Path $serverDirectory/bukkit.json)) -or (Test-Path -Path $serverDirectory/server.jar))) {
@@ -120,7 +123,7 @@ function Get_Server_File {
         Write-Host "Paper Server does not support this version."
         Exit
       }
-      $build_id = (curl.exe -s  "https://papermc.io/api/v2/projects/paper/versions/$version_" | ConvertFrom-Json).builds[-1]
+      $build_id = (curl.exe -s "https://papermc.io/api/v2/projects/paper/versions/$version_" | ConvertFrom-Json).builds[-1]
       if ($remapped_) {
         $mojmap = "-mojmap"
       } else {
@@ -133,6 +136,33 @@ function Get_Server_File {
         Exit
       } else {
         curl.exe -sfSLo $serverDirectory/server.jar $url
+      }
+    }
+    "fabric" {
+      $remapped_=$false
+      $installer_version = (curl.exe -s "https://meta.fabricmc.net/v2/versions/installer" | ConvertFrom-Json)[0].version
+      if ($modVersion_ -eq "latest") {
+        $modVersion_ = (curl.exe -s "https://meta.fabricmc.net/v2/versions/loader" | ConvertFrom-Json)[0].version
+      } else {
+        $loaders = (curl.exe -s "https://meta.fabricmc.net/v2/versions/loader" | ConvertFrom-Json)
+        foreach ($item in $loaders) {
+          if ($item.version -eq $version_) {
+            $modVersion_ = $item.url
+            break
+          }
+        }
+      }
+      if ($null -eq $modVersion_) {
+        Write-Host "Fabric Loader does not support this version."
+        Exit
+      }
+      $fabric_bukkit = "https://meta.fabricmc.net/v2/versions/loader/$version_/$modVersion_/$installer_version/server/jar"
+      $response = Invoke-WebRequest -Uri $fabric_bukkit -Method Head
+      if ($response.StatusCode -ne 200) {
+        Write-Host "Fabric Server File could not be downloaded."
+        Exit
+      } else {
+        curl.exe -sfSLo $serverDirectory/server.jar $fabric_bukkit
       }
     }
     default {
@@ -163,6 +193,7 @@ if ($help -or $h) {
   Write-Host "Options:"
   Write-Host " -h, -help                              Show this help and exit"
   Write-Host " -v, -version <version>                 Select the Minecraft Server version"
+  Write-Host " -v, -modVersion <version>                 Select the Minecraft Mod Server version"
   Write-Host " -t, -type <vanilla|paper|spigot>       Select the Bukkit type you want to install"
   Write-Host " -r, -ram <ram_size>                    Select the amount of RAM you want to allocate to the server"
   Write-Host " -d, -sd, -serverDirectory <directory>  Select the path to install the Minecraft Server"
@@ -187,6 +218,7 @@ if ($sd) { $serverDirectory = $sd }
 if ($ld) { $libraryDirectory = $ld }
 if ($r) { $ram = $r }
 if ($t) { $type = $t }
+if ($m) { $modVersion = $m }
 
 Directory_Setting
 $serverDirectory = Resolve-Path -Path $serverDirectory
@@ -202,5 +234,5 @@ if ($version -eq "snapshot") {
 Check_Version_Exist $version
 $java_version = Check_Java_Version $version
 Install_Java $java_version
-Get_Server_File $version $type $remapped
+Get_Server_File $version $type $modVersion $remapped
 Start_Server $version $ram
