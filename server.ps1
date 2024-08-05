@@ -135,17 +135,6 @@ function Get_Server_File {
         curl.exe -sfSLo $serverDirectory/server.jar $url
       }
     }
-    "spigot" {
-      $remapped_=$false
-      $url = "https://download.getbukkit.org/spigot/spigot-$version_.jar"
-      $response = Invoke-WebRequest -Uri $url -Method Head
-      if ($response.StatusCode -ne 200) {
-        Write-Host "Spigot Server does not support this version."
-        Exit
-      } else {
-        curl.exe -sfSLo $serverDirectory/server.jar $url
-      }
-    }
     default {
       Write-Host "Invaild Bukkit type."
       Exit

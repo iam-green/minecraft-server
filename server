@@ -233,15 +233,6 @@ get_server_file() {
       curl -s -o $server_directory/server.jar -L $server_file
     fi
     ;;
-  "spigot")
-    remapped_=false
-    local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" https://download.getbukkit.org/spigot/spigot-$version_.jar)
-    if [ $status -ne 200 ]; then
-      echo "Spigot Server does not support this version."
-      rm -rf $server_directory/server.jar
-      exit 1
-    fi
-    ;;
   "paper")
     local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$version_)
     if [ $status -ne 200 ]; then
