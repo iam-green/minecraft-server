@@ -5,7 +5,7 @@ version="latest"
 type="paper"
 ram="4G"
 server_directory=.
-library_directory=~/.past2l
+library_directory=~/.iam-green
 remapped=false
 force_replace=false
 
@@ -90,7 +90,7 @@ handle_argument() {
       shift
       ;;
     -u | --update)
-      curl -s -o ./server -L https://raw.githubusercontent.com/Past2l/minecraft-server/main/server
+      curl -s -o ./server -L https://raw.githubusercontent.com/iam-green/minecraft-server/main/server
       chmod +x ./server
       echo The update is complete, please re-run the code.
       exit 0

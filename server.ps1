@@ -1,7 +1,7 @@
 param (
   [string]$version = "latest",
   [string]$serverDirectory = ".",
-  [string]$libraryDirectory = "$env:APPDATA/past2l",
+  [string]$libraryDirectory = "$env:APPDATA/iam-green",
   [string]$ram = "4G",
   [string]$type = "paper",
   [switch]$remapped,
@@ -185,7 +185,7 @@ if ($help -or $h) {
 }
 
 if ($update -or $u) {
-  curl.exe -sfSLo .\server.ps1 "https://raw.githubusercontent.com/Past2l/minecraft-server/main/server.ps1"
+  curl.exe -sfSLo .\server.ps1 "https://raw.githubusercontent.com/iam-green/minecraft-server/main/server.ps1"
   Write-Host "The update is complete, please re-run the code."
   exit
 }

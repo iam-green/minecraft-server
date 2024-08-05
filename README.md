@@ -1,38 +1,43 @@
 # Minecraft Server Generator
+
 > Easy and fast Minecraft server generator<br>
 > Automatically install required libraries and<br>
 > download servers tailored to the latest version of Minecraft
->
 
 ## Docker
 
 ### Setup Command
+
 ```bash
 docker create -it -name minecraft-server -p 25565:25565 \
-  ghcr.io/past2l/minecraft-server
+  ghcr.io/iam-green/minecraft-server
 ```
 
 ### Environments
-|Environment Name|Description|Default Value|
-|:-:|:-:|:-:|
-|TZ|Set Timezone|`Asia/Seoul`|
-|UID|Set User ID|`1000`|
-|GID|Set Group ID|`1000`|
-|VERSION|Set Minecraft Version|`latest`|
-|RAM|Set Minecraft Server RAM|`4096M`|
-|FORCE_REPLACE|Set Force Replace Minecraft Bukkit|`false`|
-|REMAPPED|Set Download Remapped<br>Minecraft Bukkit (`paper` only)|`false`|
-|TYPE|Set Minecraft Bukkit Type<br>(`vanilla`, `paper`, `spigot`)|`paper`|
-|SERVER_DIRECTORY|Set Minecraft Server Directory|`/mc/app`|
-|LIBRARY_DIRECTORY|Set Library Directory|`/mc/lib`|
+
+| Environment Name  |                         Description                         | Default Value |
+| :---------------: | :---------------------------------------------------------: | :-----------: |
+|        TZ         |                        Set Timezone                         | `Asia/Seoul`  |
+|        UID        |                         Set User ID                         |    `1000`     |
+|        GID        |                        Set Group ID                         |    `1000`     |
+|      VERSION      |                    Set Minecraft Version                    |   `latest`    |
+|        RAM        |                  Set Minecraft Server RAM                   |    `4096M`    |
+|   FORCE_REPLACE   |             Set Force Replace Minecraft Bukkit              |    `false`    |
+|     REMAPPED      |  Set Download Remapped<br>Minecraft Bukkit (`paper` only)   |    `false`    |
+|       TYPE        | Set Minecraft Bukkit Type<br>(`vanilla`, `paper`, `spigot`) |    `paper`    |
+| SERVER_DIRECTORY  |               Set Minecraft Server Directory                |   `/mc/app`   |
+| LIBRARY_DIRECTORY |                    Set Library Directory                    |   `/mc/lib`   |
+
 ## Windows
 
 ### Setup Command
+
 ```batch
 .\server.bat
 ```
 
 ### Options
+
 ```
   -h, -help                              Show this help and exit
   -v, -version <version>                 Select the Minecraft Server version
@@ -44,14 +49,17 @@ docker create -it -name minecraft-server -p 25565:25565 \
   -remapped                              Select the remapped version of the server
   -forceReplace                          Force replace the existing server file
 ```
+
 ## macOS & Linux
 
 ### Setup Command
+
 ```batch
 chmod +x ./server && ./server
 ```
 
 ### Options
+
 ```
   -h, --help                               Show this help and exit
   -v, --version <version>                  Select the Minecraft Server version
