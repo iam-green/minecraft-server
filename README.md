@@ -15,18 +15,19 @@ docker create -it -name minecraft-server -p 25565:25565 \
 
 ### Environments
 
-| Environment Name  |                         Description                         | Default Value |
-| :---------------: | :---------------------------------------------------------: | :-----------: |
-|        TZ         |                        Set Timezone                         | `Asia/Seoul`  |
-|        UID        |                         Set User ID                         |    `1000`     |
-|        GID        |                        Set Group ID                         |    `1000`     |
-|      VERSION      |                    Set Minecraft Version                    |   `latest`    |
-|        RAM        |                  Set Minecraft Server RAM                   |    `4096M`    |
-|   FORCE_REPLACE   |             Set Force Replace Minecraft Bukkit              |    `false`    |
-|     REMAPPED      |  Set Download Remapped<br>Minecraft Bukkit (`paper` only)   |    `false`    |
-|       TYPE        | Set Minecraft Bukkit Type<br>(`vanilla`, `paper`, `fabric`) |    `paper`    |
-| SERVER_DIRECTORY  |               Set Minecraft Server Directory                |   `/mc/app`   |
-| LIBRARY_DIRECTORY |                    Set Library Directory                    |   `/mc/lib`   |
+| Environment Name  |                             Description                              | Default Value  |
+| :---------------: | :------------------------------------------------------------------: | :------------: |
+|        TZ         |                             Set Timezone                             |  `Asia/Seoul`  |
+|        UID        |                             Set User ID                              |     `1000`     |
+|        GID        |                             Set Group ID                             |     `1000`     |
+|      VERSION      |                        Set Minecraft Version                         |    `latest`    |
+|    MOD_VERSION    |               Set Mod Version (`fabric`, `forge` only)               |  `recommend`   |
+|        RAM        |                       Set Minecraft Server RAM                       |    `4096M`     |
+|   FORCE_REPLACE   |                  Set Force Replace Minecraft Bukkit                  |    `false`     |
+|     REMAPPED      |       Set Download Remapped<br>Minecraft Bukkit (`paper` only)       |    `false`     |
+|       TYPE        | Set Minecraft Bukkit Type<br>(`vanilla`, `paper`, `fabric`, `forge`) |    `paper`     |
+| SERVER_DIRECTORY  |                    Set Minecraft Server Directory                    |      `.`       |
+| LIBRARY_DIRECTORY |                        Set Library Directory                         | `~/.iam-green` |
 
 ## Windows
 

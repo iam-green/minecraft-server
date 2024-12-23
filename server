@@ -1,14 +1,15 @@
 #!/bin/bash
 set -e
 
-version="latest"
-type="paper"
-ram="4G"
-server_directory=.
-library_directory=~/.iam-green
-remapped=false
-force_replace=false
-mod_version="latest"
+VERSION="latest"
+TYPE="paper"
+RAM="4G"
+SERVER_DIRECTORY=.
+LIBRARY_DIRECTORY=~/.iam-green
+REMAPPED=false
+FORCE_REPLACE=false
+MOD_VERSION="recommend"
+SERVER_FILE="server.jar"
 
 usage() {
   echo "Usage: $0 [OPTIONS]"
@@ -46,25 +47,25 @@ handle_argument() {
         usage
         exit 1
       fi
-      version=$(extract_argument $@)
+      VERSION=$(extract_argument $@)
       shift
       ;;
-    -d | -sd | --server-directory)
+    -d | -sd | --server-directory | --serverDirectiry)
       if ! has_argument $@; then
         echo "Location not specified." >&2
         usage
         exit 1
       fi
-      server_directory=$(extract_argument $@)
+      SERVER_DIRECTORY=$(extract_argument $@)
       shift
       ;;
-    -ld | --library-directory)
+    -ld | --library-directory | --libraryDirectory)
       if ! has_argument $@; then
         echo "Location not specified." >&2
         usage
         exit 1
       fi
-      library_directory=$(extract_argument $@)
+      LIBRARY_DIRECTORY=$(extract_argument $@)
       shift
       ;;
     -r | --ram)
@@ -73,23 +74,23 @@ handle_argument() {
         usage
         exit 1
       fi
-      ram=$(extract_argument $@)
+      RAM=$(extract_argument $@)
       shift
       ;;
-    -m | --mod-version)
+    -m | --mod-version | --modVersion)
       if ! has_argument $@; then
         echo "Mod Version not specified." >&2
         usage
         exit 1
       fi
-      mod_version=$(extract_argument $@)
+      MOD_VERSION=$(extract_argument $@)
       shift
       ;;
     --remapped)
-      remapped=true
+      REMAPPED=true
       ;;
-    --force-replace)
-      force_replace=true
+    --force-replace | --forceReplace)
+      FORCE_REPLACE=true
       ;;
     -t | --type)
       if ! has_argument $@; then
@@ -97,7 +98,7 @@ handle_argument() {
         usage
         exit 1
       fi
-      type=$(extract_argument $@)
+      TYPE=$(extract_argument $@)
       shift
       ;;
     -u | --update)
@@ -114,10 +115,6 @@ handle_argument() {
     esac
     shift
   done
-}
-
-contains() {
-  [[ $1 =~ (^|[[:space:]])$2($|[[:space:]]) ]] && echo true || echo false
 }
 
 set_timezone() {
@@ -143,144 +140,10 @@ get_arch() {
     echo "arm64"
     ;;
   *)
+    echo "This architecture is not supported."
     exit 1
     ;;
   esac
-}
-
-# check_java_version <minecraft_version>
-check_java_version() {
-  local version_url=$(get_mc_version_list | $library_directory/jq -r ".[] | select(.id == \"$1\") | .url")
-  echo $(curl -s $version_url | $library_directory/jq -r ".javaVersion.majorVersion")
-}
-
-# get_java_file_name <java_version> <os> <architecture>
-get_java_file_name() {
-  local java_version=$1
-  local os=$2
-  local arch=$3
-  local name=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=$java_version&os=$os&arch=$arch&java_package_type=jre&page=1&page_size=1&release_status=ga&availability_types=CA&certifications=tck&archive_type=tar.gz" | $library_directory/jq -r ".[0].name")
-  echo "${name//.tar.gz/}"
-}
-
-# install_java <java_version> <os> <architecture>
-install_java() {
-  local java_version=$1
-  local os=$2
-  local arch=$3
-
-  if [ ! -d $library_directory/java ]; then
-    mkdir -p $library_directory/java
-  fi
-
-  local java_name=$(get_java_file_name $java_version $os $arch)
-
-  if [ ! -d "$library_directory/java/$java_version" ]; then
-    curl -sLO https://cdn.azul.com/zulu/bin/$java_name.tar.gz
-    tar -zxf $java_name.tar.gz -C $library_directory
-    mv $library_directory/$java_name $library_directory/java/$java_version
-    rm $java_name.tar.gz
-  fi
-}
-
-install_jq() {
-  if [ ! -e $library_directory/jq ]; then
-    curl -s -o $library_directory/jq -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-$(get_os)-$(get_arch)
-    chmod +x $library_directory/jq
-  fi
-}
-
-get_mc_version_list() {
-  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq ".versions")
-}
-
-get_mc_latest_version() {
-  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".latest.release")
-}
-
-get_mc_snapshot_version() {
-  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".latest.snapshot")
-}
-
-# check_version_exist <minecraft_version>
-check_version_exist() {
-  local version_=$1
-  local version_exist=$(get_mc_version_list | $library_directory/jq ".[] | select(.id == \"$version_\") | .id")
-  if [ ! $version_exist ]; then
-    echo "Version not found."
-    exit 1
-  fi
-}
-
-# get_server_file <minecraft_version> <bukkit> <remapped> <mod_version>
-get_server_file() {
-  local version_=$1
-  local type_=$2
-  local remapped_=$3
-  local mod_version_=$4
-  if [ $force_replace == true ] || [ ! -e $server_directory/bukkit.json ]; then
-    rm -f $server_directory/server.jar
-  fi
-  if [ -e $server_directory/server.jar ] && [ -e $server_directory/bukkit.json ]; then
-    local before=$(cat $server_directory/bukkit.json)
-    local before_version=$(echo $before | $library_directory/jq -r ".version")
-    local before_type=$(echo $before | $library_directory/jq -r ".type")
-    local before_remapped=$(echo $before | $library_directory/jq -r ".remapped")
-    if [ $before_version != $version_ ] || [ $before_type != $type_ ] || [ $before_remapped != $remapped_ ]; then
-      rm -f $server_directory/server.jar
-    fi
-  fi
-  if [ -e $server_directory/server.jar ]; then
-    return 0
-  fi
-  case $type_ in
-  "vanilla")
-    remapped_=false
-    local version_url=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $library_directory/jq -r ".versions[] | select(.id == \"$version_\") | .url")
-    local server_file=$(curl -s $version_url | $library_directory/jq -r ".downloads.server.url")
-    if [ $server_file == "null" ]; then
-      echo "Vanilla Server does not support this version."
-      exit 1
-    else
-      curl -s -o $server_directory/server.jar -L $server_file
-    fi
-    ;;
-  "paper")
-    local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$version_)
-    if [ $status -ne 200 ]; then
-      echo "PaperMC Server does not support this version."
-      exit 1
-    fi
-    local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$version_ | $library_directory/jq -r ".builds[-1]")
-    local mojmap=$([ $remapped_ == true ] && echo "-mojmap" || echo "")
-    local url="https://papermc.io/api/v2/projects/paper/versions/$version_/builds/$build_id/downloads/paper$mojmap-$version_-$build_id.jar"
-    local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" $url)
-    if [ $status -ne 200 ]; then
-      echo "PaperMC Server File could not be downloaded."
-      exit 1
-    fi
-    ;;
-  "fabric")
-    remapped_=false
-    local installer_version=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq -r ".[0].version")
-    mod_version_=$([ $mod_version_ == 'latest' ] && echo $(curl -s https://meta.fabricmc.net/v2/versions/loader | jq -r '.[0].version') || echo $(curl -s https://meta.fabricmc.net/v2/versions/loader | jq -r ".[] | select(.version==\"$mod_version_\") | .version"))
-    if [ ! $mod_version_ ]; then
-      echo "Fabric Loader does not support this version."
-      exit 1
-    fi
-    local fabric_bukkit="https://meta.fabricmc.net/v2/versions/loader/$version_/$mod_version_/$installer_version/server/jar"
-    local status=$(curl -s -o $server_directory/server.jar -w "%{http_code}" $fabric_bukkit)
-    if [ $status -ne 200 ]; then
-      echo "Fabric Server File could not be downloaded."
-      exit 1
-    fi
-    ;;
-  *)
-    echo "Invaild Bukkit type."
-    exit 1
-    ;;
-  esac
-  echo "{\"type\":\"${type_}\",\"version\":\"${version_}\",\"remapped\":\"${remapped_}\"}" >$server_directory/bukkit.json
 }
 
 create_group_user() {
@@ -301,25 +164,194 @@ create_group_user() {
 }
 
 directory_setting() {
-  if [ ! -d $server_directory ]; then
-    mkdir -p $server_directory
+  if [ ! -d $SERVER_DIRECTORY ]; then
+    mkdir -p $SERVER_DIRECTORY
   fi
-  if [ ! -d $library_directory ]; then
-    mkdir -p $library_directory
+  if [ ! -d $LIBRARY_DIRECTORY ]; then
+    mkdir -p $LIBRARY_DIRECTORY
   fi
-  server_directory=$(realpath $server_directory)
-  library_directory=$(realpath $library_directory)
+  SERVER_DIRECTORY=$(realpath $SERVER_DIRECTORY)
+  LIBRARY_DIRECTORY=$(realpath $LIBRARY_DIRECTORY)
 }
 
 set_chown() {
-  chown -R $USER $server_directory $library_directory
+  chown -R $USER $SERVER_DIRECTORY $LIBRARY_DIRECTORY
 }
 
-# start_server <java_version> <ram>
+get_mc_manifest() {
+  echo $(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json)
+}
+
+get_mc_version_list() {
+  echo $(get_mc_manifest | $LIBRARY_DIRECTORY/jq ".versions")
+}
+
+get_mc_latest_version() {
+  echo $(get_mc_manifest | $LIBRARY_DIRECTORY/jq -r ".latest.release")
+}
+
+get_mc_snapshot_version() {
+  echo $(get_mc_manifest | $LIBRARY_DIRECTORY/jq -r ".latest.snapshot")
+}
+
+# check_java_version <minecraft_version>
+check_java_version() {
+  local version_url=$(get_mc_version_list | $LIBRARY_DIRECTORY/jq -r ".[] | select(.id == \"$1\") | .url")
+  echo $(curl -s $version_url | $LIBRARY_DIRECTORY/jq -r ".javaVersion.majorVersion")
+}
+
+# check_mc_version_exist <minecraft_version>
+check_mc_version_exist() {
+  local version_=$1
+  local version_exist=$(get_mc_version_list | $LIBRARY_DIRECTORY/jq ".[] | select(.id == \"$version_\") | .id")
+  if [ ! $version_exist ]; then
+    echo "This Minecraft version could not be found."
+    exit 1
+  fi
+}
+
+install_jq() {
+  if [ ! -e $LIBRARY_DIRECTORY/jq ]; then
+    curl -s -o $LIBRARY_DIRECTORY/jq -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-$(get_os)-$(get_arch)
+    chmod +x $LIBRARY_DIRECTORY/jq
+  fi
+}
+
+# install_java <java_version> <os> <architecture>
+install_java() {
+  if [ ! -d $LIBRARY_DIRECTORY/java ]; then
+    mkdir -p $LIBRARY_DIRECTORY/java
+  fi
+  if [ ! -d "$LIBRARY_DIRECTORY/java/$1" ]; then
+    local temp_name=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=$1&os=$2&arch=$3&java_package_type=jre&page=1&page_size=1&release_status=ga&availability_types=CA&certifications=tck&archive_type=tar.gz" | $LIBRARY_DIRECTORY/jq -r ".[0].name")
+    local java_name="${temp_name%.tar.gz}"
+    curl -s -o $LIBRARY_DIRECTORY/java_$1.tar.gz https://cdn.azul.com/zulu/bin/$java_name.tar.gz
+    tar -zxf $LIBRARY_DIRECTORY/java_$1.tar.gz -C $LIBRARY_DIRECTORY
+    mv $LIBRARY_DIRECTORY/$java_name $LIBRARY_DIRECTORY/java/$1
+    rm $LIBRARY_DIRECTORY/java_$1.tar.gz
+  fi
+}
+
+# download_vanilla_server <minecraft_version>
+download_vanilla_server() {
+  local version_url=$(curl -s https://launchermeta.mojang.com/mc/game/version_manifest.json | $LIBRARY_DIRECTORY/jq -r ".versions[] | select(.id == \"$1\") | .url")
+  local server_file=$(curl -s $version_url | $LIBRARY_DIRECTORY/jq -r ".downloads.server.url")
+  if [ $server_file == "null" ]; then
+    echo "Vanilla Server does not support this minecraft version."
+    exit 1
+  fi
+  curl -s -o $SERVER_DIRECTORY/$SERVER_FILE -L $server_file || { echo "Vanilla Server file could not be downloaded."; exit 1; }
+}
+
+# download_paper_server <minecraft_version> <remapped>
+download_paper_server() {
+  local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$1)
+  if [ $status -ne 200 ]; then
+    echo "PaperMC Server does not support this minecraft version."
+    exit 1
+  fi
+  local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$1 | $LIBRARY_DIRECTORY/jq -r ".builds[-1]")
+  local mojmap=$([ $2 == true ] && echo "-mojmap" || echo "")
+  local url="https://papermc.io/api/v2/projects/paper/versions/$1/builds/$build_id/downloads/paper$mojmap-$1-$build_id.jar"
+  curl -s -o $SERVER_DIRECTORY/$SERVER_FILE -L $url || { echo "PaperMC Server file could not be downloaded."; exit 1; }
+}
+
+# get_forge_version <minecraft_version> <forge_version>
+get_forge_version() {
+  local temp=$2
+  MOD_VERSION=$(
+    if [ $temp == "recommend" ]; then
+      if [[ "$content" == *"Recommended: "* ]]; then
+        echo "$content" | sed -n 's/.*Recommended: \([^"]*\).*/\1/p'
+      else
+        temp="latest"
+      fi
+    fi
+    if [ $temp == "latest" ]; then
+      echo "$content" | sed -n 's/.*Latest: \([^"]*\).*/\1/p'
+    fi
+  )
+}
+
+# download_forge_server <minecraft_version> <forge_version>
+download_forge_server() {
+  local content=$(curl -s https://files.minecraftforge.net/net/minecraftforge/forge/index_$1.html)
+  if [[ "$content" != *"-$1-$MOD_VERSION-"* ]]; then
+    echo "Forge does not support this minecraft version."
+    exit 1
+  fi
+  curl -s -o $SERVER_DIRECTORY/forge_installer.jar -L https://maven.minecraftforge.net/net/minecraftforge/forge/$1-$MOD_VERSION/forge-$1-$MOD_VERSION-installer.jar || { echo "Forge Installer file could not be downloaded."; exit 1; }
+  $LIBRARY_DIRECTORY/java/$(check_java_version $1)/bin/java -jar $SERVER_DIRECTORY/forge_installer.jar --installServer $SERVER_DIRECTORY > /dev/null 2>&1
+  rm -rf $SERVER_DIRECTORY/forge_installer.jar ./forge_installer.jar.log
+}
+
+# get_fabric_version <minecraft_version> <fabric_version>
+get_fabric_version() {
+  if curl -s "https://meta.fabricmc.net/v2/versions/loader/$1" | $LIBRARY_DIRECTORY/jq -e 'length == 0' > /dev/null; then
+    echo "Fabric does not support this minecraft version."
+    exit 1
+  fi
+  MOD_VERSION=$(
+    if [ "$2" == "latest" ] || [ "$2" == "recommend" ]; then
+      echo $(curl -s https://meta.fabricmc.net/v2/versions/loader | $LIBRARY_DIRECTORY/jq -r '.[0].version')
+    else 
+      echo $(curl -s https://meta.fabricmc.net/v2/versions/loader | $LIBRARY_DIRECTORY/jq -r ".[] | select(.version==\"$2\") | .version")
+    fi
+  )
+}
+
+# download_fabric_server <minecraft_version> <fabric_version>
+download_fabric_server() {
+  if [ ! $MOD_VERSION ]; then
+    echo "Fabric does not support this loader version."
+    exit 1
+  fi
+  local installer_version=$(curl -s https://meta.fabricmc.net/v2/versions/installer | jq -r ".[0].version")
+  local fabric_bukkit="https://meta.fabricmc.net/v2/versions/loader/$1/$MOD_VERSION/$installer_version/server/jar"
+  curl -s -o $SERVER_DIRECTORY/$SERVER_FILE -L $fabric_bukkit || { echo "Fabric Server file could not be downloaded."; exit 1; }
+}
+
+# get_server_file <type> <minecraft_version> <mod_version> <remapped>
+get_server_file() {
+  if [ $FORCE_REPLACE ]; then
+    rm -rf $SERVER_DIRECTORY/$SERVER_FILE $SERVER_DIRECTORY/libraries
+  fi
+  case $1 in
+    "forge")
+      get_forge_version $2 $3;;
+    "fabric")
+      get_fabric_version $2 $3;;
+  esac
+  if { [ $1 == "forge" ] && [ -d $SERVER_DIRECTORY/libraries/net/minecraftforge/forge/$VERSION-$MOD_VERSION ]; } ||[ -e $SERVER_DIRECTORY/$SERVER_FILE ]; then
+    return 0
+  fi
+  case $1 in
+    "vanilla")
+      download_vanilla_server $2;;
+    "paper")
+      download_paper_server $2 $4;;
+    "forge")
+      download_forge_server $2 $3;;
+    "fabric")
+      download_fabric_server $2 $3;;
+    *)
+      echo "Invaild Bukkit type."
+      exit 1;;
+  esac
+}
+
+# start_server <type> <java_version> <minecraft_version> <mod_version> <ram>
 start_server() {
-  echo "eula=true" >$server_directory/eula.txt
-  cd $server_directory
-  sudo -u $USER $library_directory/java/$1/bin/java -Xmx$2 -Dfile.encoding=utf-8 -jar server.jar nogui
+  echo "eula=true" > $SERVER_DIRECTORY/eula.txt
+  cd $SERVER_DIRECTORY
+  local args=$(
+    if [ $1 == "forge" ] && [ -e "$SERVER_DIRECTORY/run.sh" ]; then
+      echo "@libraries/net/minecraftforge/forge/$3-$4/unix_args.txt"
+    else
+      echo "-jar $SERVER_FILE"
+    fi
+  )
+  sudo -u $USER $LIBRARY_DIRECTORY/java/$2/bin/java -Xmx$5 -Dfile.encoding=utf-8 $args nogui
 }
 
 handle_argument "$@"
@@ -328,19 +360,21 @@ set_timezone
 directory_setting
 install_jq
 
-if [ $version == "latest" ]; then
-  version=$(get_mc_latest_version)
+if [ $VERSION == "latest" ]; then
+  VERSION=$(get_mc_latest_version)
+elif [ $VERSION == "snapshot" ]; then
+  TYPE="vanilla"
+  VERSION=$(get_mc_snapshot_version)
 fi
-if [ $version == "snapshot" ]; then
-  type="vanilla"
-  version=$(get_mc_snapshot_version)
-  remapped=false
+
+if [ $TYPE != "paper" ]; then
+  REMAPPED=false
 fi
 
 create_group_user
-check_version_exist $version
-java_version=$(check_java_version $version)
-install_java $java_version $(get_os) $(get_arch)
-get_server_file $version $type $remapped $mod_version
+check_mc_version_exist $VERSION
+JAVA_VERSION=$(check_java_version $VERSION)
+install_java $JAVA_VERSION $(get_os) $(get_arch)
+get_server_file $TYPE $VERSION $MOD_VERSION $REMAPPED
 set_chown
-start_server $java_version $ram
+start_server $TYPE $JAVA_VERSION $VERSION $MOD_VERSION $RAM
