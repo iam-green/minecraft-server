@@ -20,6 +20,7 @@ RUN apt-get install -y curl sudo
 COPY server .
 RUN chmod +x server
 EXPOSE 25565/tcp
+VOLUME ["/mc/app", "/mc/lib"]
 CMD ./server -v $VERSION -t $TYPE -r $RAM -m $MOD_VERSION \
   -d $SERVER_DIRECTORY -ld $LIBRARY_DIRECTORY \
   $( [ "$FORCE_REPLACE" = "true" ] && echo "--force-replace" || echo "" ) \
