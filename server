@@ -245,14 +245,14 @@ download_vanilla_server() {
 
 # download_paper_server <minecraft_version> <remapped>
 download_paper_server() {
-  local status=$(curl -s -o /dev/null -w "%{http_code}" https://papermc.io/api/v2/projects/paper/versions/$1)
+  local status=$(curl -s -o /dev/null -w "%{http_code}" https://api.papermc.io/v2/projects/paper/versions/$1)
   if [ $status -ne 200 ]; then
     echo "PaperMC Server does not support this minecraft version."
     exit 1
   fi
-  local build_id=$(curl -s https://papermc.io/api/v2/projects/paper/versions/$1 | $LIBRARY_DIRECTORY/jq -r ".builds[-1]")
+  local build_id=$(curl -s https://api.papermc.io/v2/projects/paper/versions/$1 | $LIBRARY_DIRECTORY/jq -r ".builds[-1]")
   local mojmap=$([ $2 == true ] && echo "-mojmap" || echo "")
-  local url="https://papermc.io/api/v2/projects/paper/versions/$1/builds/$build_id/downloads/paper$mojmap-$1-$build_id.jar"
+  local url="https://api.papermc.io/v2/projects/paper/versions/$1/builds/$build_id/downloads/paper$mojmap-$1-$build_id.jar"
   curl -s -o $SERVER_DIRECTORY/$SERVER_FILE -L $url || { echo "PaperMC Server file could not be downloaded."; exit 1; }
 }
 

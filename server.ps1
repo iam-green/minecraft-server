@@ -188,14 +188,14 @@ function Download-Paper-Server {
     [string]$v = $version,
     [switch]$re = $remapped
   )
-  $res = Invoke-WebRequest -Uri "https://papermc.io/api/v2/projects/paper/versions/$v" -Method Head
+  $res = Invoke-WebRequest -Uri "https://api.papermc.io/v2/projects/paper/versions/$v" -Method Head
   if ($res.StatusCode -ne 200) {
     Write-Host "PaperMC Server does not support this minecraft version."
     exit
   }
-  $build_id = (Use-Curl "https://papermc.io/api/v2/projects/paper/versions/$v" | ConvertFrom-Json).builds[-1]
+  $build_id = (Use-Curl "https://api.papermc.io/v2/projects/paper/versions/$v" | ConvertFrom-Json).builds[-1]
   if ($re) { $mojmap = "-mojmap" } else { $mojmap = "" }
-  Use-Curl-Download $serverDirectory/$serverFile "https://papermc.io/api/v2/projects/paper/versions/$v/builds/$build_id/downloads/paper$mojmap-$v-$build_id.jar"
+  Use-Curl-Download $serverDirectory/$serverFile "https://api.papermc.io/v2/projects/paper/versions/$v/builds/$build_id/downloads/paper$mojmap-$v-$build_id.jar"
 }
 
 function Get-Forge-Version {
