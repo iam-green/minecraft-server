@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:latest
 LABEL maintainer="iam-green <yundohyun050121@gmail.com>"
 LABEL org.opencontainers.image.source https://github.com/iam-green/minecraft-server
 ARG DEBIAN_FRONTEND=noninteractive
